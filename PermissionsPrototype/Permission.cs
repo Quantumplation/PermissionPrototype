@@ -64,7 +64,9 @@ namespace PermissionsPrototype
         {
             protected override IEnumerable<Rule> GetRules()
             {
+                // ADM and BOAD can see Initial, InProgress, and Complete BD's
                 yield return new StatusRule(new HasAnyRoleRule("ADM", "BOAD"), BudgetDeterminationStatusEnum.Initial, BudgetDeterminationStatusEnum.InProgress, BudgetDeterminationStatusEnum.Complete);
+                // ADM can see archived BD's
                 yield return new StatusRule(new HasAnyRoleRule("ADM"), BudgetDeterminationStatusEnum.Archived);
             }
         }
@@ -98,7 +100,9 @@ namespace PermissionsPrototype
         {
             protected override IEnumerable<Rule> GetRules()
             {
+                // ADM and BOAD can see any SAA,
                 yield return new HasAnyRoleRule("ADM", "BOAD");
+                // If the SAA is Initial or acknowledged, FO's for the SAA's department can see it.
                 yield return new StatusRule(new HasAnyRoleAtRule<SpaceAllocationAcknowledgement>(x => x.Department, "FO"), SpaceAllocationAcknowledgementStatusEnum.Initial, SpaceAllocationAcknowledgementStatusEnum.Acknowledged);
             }
         }

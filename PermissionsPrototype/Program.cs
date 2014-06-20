@@ -10,6 +10,9 @@ namespace PermissionsPrototype
     {
         static void Main(string[] args)
         {
+            // Set up some dummy data.  In this sample, we're storing people's role assignments as tuples of the role, plus the chain down the 
+            // OU tree where it's assigned.  This is so we can mimic the fact that a RA at parent counts as a RA at child easily in the dummy data
+            // In the real system, this would be implemented via real checks.
             var uow = new UnitOfWork
             {
                 Data = new Dictionary<int, object>
@@ -34,19 +37,36 @@ namespace PermissionsPrototype
                 }
             };
 
+            // Then print who can view each object
+
+            // The rules for BD's are: ADM's and BO's can both see BD's that are initial/in progress/completed, and only ADM's can see Archived BD's
             var bdPerm = new BudgetDeterminationPermission.View();
+            // THe rules for SAA's are: ADM's and BOAD's can see all SAA's, but an FO can only see an SA if it is an SAA for a department under where they're assigned the FO permission.
             var saaPerm = new SpaceAllocationAcknowledgementPermission.View();
             for (int x = 5; x <= 8; x++)
             {
                 var obj = uow.Get<BudgetDetermination>(x);
-                Console.WriteLine("Users that can see {0}: {1}", x, String.Join(", ", bdPerm.UsersWithPermission(obj, uow)));
+                Console.WriteLine("Users that can see BD {0}: {1}", x, String.Join(", ", bdPerm.UsersWithPermission(obj, uow)));
             }
             for (int x = 10; x <= 16; x++)
             {
                 var obj = uow.Get<SpaceAllocationAcknowledgement>(x);
-                Console.WriteLine("Users that can see {0}: {1}", x, String.Join(", ", saaPerm.UsersWithPermission(obj, uow)));
+                Console.WriteLine("Users that can see SAA {0}: {1}", x, String.Join(", ", saaPerm.UsersWithPermission(obj, uow)));
                 if (x == 12) x = 15;
             }
+
+            /*
+             OUTPUT:
+                 Users that can see BD 5: Arnold, Beth
+                 Users that can see BD 6: Arnold, Beth
+                 Users that can see BD 7: Arnold, Beth
+                 Users that can see BD 8: Arnold
+                 Users that can see SAA 10: Arnold, Beth, Donald, Gertrude
+                 Users that can see SAA 11: Arnold, Beth, Erwin, Gertrude
+                 Users that can see SAA 12: Arnold, Beth, Gertrude
+                 Users that can see SAA 16: Arnold, Beth, Gertrude, Harold
+             */
+
             Console.ReadKey();
         }
     }
