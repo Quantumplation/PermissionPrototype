@@ -72,6 +72,10 @@ namespace PermissionsPrototype
         }
     }
 
+    /// <summary>
+    /// This gives some example of how useful the rules can be, because we can define very common patterns that are
+    /// relatively complex, but use them over and over in a bunch of permissions.
+    /// </summary
     public class HasAnyRoleAtRule<U> : Rule where U : class, IPersistable, new()
     {
         private readonly HashSet<string> _roles;

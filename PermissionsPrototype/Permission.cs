@@ -11,9 +11,16 @@ namespace PermissionsPrototype
         int Id { get; set; }
     }
 
+    /// <summary>
+    /// A permission is a collection of rules determining who is allowed to perform certain actions.
+    /// </summary>
     public abstract class Permission : IPersistable
     {
-        protected abstract IEnumerable<Rule> GetRules();
+        // We can define extremely broad permissions, like SYS and ADM can do ANYTHING.
+        protected virtual IEnumerable<Rule> GetRules()
+        {
+            yield return new HasAnyRoleRule("ADM", "SYS");
+        }
     
         public int Id { get; set; }
 
@@ -28,8 +35,25 @@ namespace PermissionsPrototype
         }
     }
 
+    /// <summary>
+    /// We can define them in a tree, so rules (ADM can see everything, for example) are shared among the various actions Create/View/Etc.
+    /// </summary>
     public abstract class BudgetDeterminationPermission : Permission
     {
+        protected override IEnumerable<Rule> GetRules()
+        {
+            yield return new StatusRule(new HasAnyRoleRule("BOAD"), BudgetDeterminationStatusEnum.Initial, BudgetDeterminationStatusEnum.InProgress, BudgetDeterminationStatusEnum.Complete);
+            foreach (var rule in base.GetRules())
+                yield return rule;
+        }
+
+        /// <summary>
+        /// You can define custom rules specific to a single type
+        /// Or you can define general rules <seealso cref="HasAnyRoleRule"/>
+        /// By default all rules are "OR"d together, so if your'e granted permissions by any rule, you're granted permissions by all of them
+        /// But you can also define rules which take in other rules (ex. the AndRule, which returns only the users that have all permissions, or
+        /// the status rule, which only evaluates another rule if the status of an object is a certain value.
+        /// </summary>
         public class StatusRule : Rule
         {
             private Rule _otherRule;
@@ -54,21 +78,12 @@ namespace PermissionsPrototype
 
         public class Create : BudgetDeterminationPermission
         {
-            protected override IEnumerable<Rule> GetRules()
-            {
-                yield return new HasAnyRoleRule("ADM", "BOAD");
-            }
+            // For some, we don't even need to define rules, because they're caught by the parents.  We might expand this in the future though,
+            // so we still have the permission
         }
 
         public class View : BudgetDeterminationPermission
         {
-            protected override IEnumerable<Rule> GetRules()
-            {
-                // ADM and BOAD can see Initial, InProgress, and Complete BD's
-                yield return new StatusRule(new HasAnyRoleRule("ADM", "BOAD"), BudgetDeterminationStatusEnum.Initial, BudgetDeterminationStatusEnum.InProgress, BudgetDeterminationStatusEnum.Complete);
-                // ADM can see archived BD's
-                yield return new StatusRule(new HasAnyRoleRule("ADM"), BudgetDeterminationStatusEnum.Archived);
-            }
         }
     }
 
@@ -98,12 +113,19 @@ namespace PermissionsPrototype
 
         public class View : SpaceAllocationAcknowledgementPermission
         {
+            /// <summary>
+            /// By the time you get down to defining which rules make up a given permission, it's *very* simple, and *very* declarative.
+            /// Very easy to read, and very easy to verify.  This is the important part.
+            /// </summary>
+            /// <returns></returns>
             protected override IEnumerable<Rule> GetRules()
             {
-                // ADM and BOAD can see any SAA,
-                yield return new HasAnyRoleRule("ADM", "BOAD");
+                // The only thing special about viewing SAA's is 
                 // If the SAA is Initial or acknowledged, FO's for the SAA's department can see it.
                 yield return new StatusRule(new HasAnyRoleAtRule<SpaceAllocationAcknowledgement>(x => x.Department, "FO"), SpaceAllocationAcknowledgementStatusEnum.Initial, SpaceAllocationAcknowledgementStatusEnum.Acknowledged);
+                // It doesn't matter which order we yield these in, because everything is being OR'd 
+                foreach (var rule in base.GetRules())
+                    yield return rule;
             }
         }
     }
