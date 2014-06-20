@@ -89,6 +89,14 @@ namespace PermissionsPrototype
 
     public abstract class SpaceAllocationAcknowledgementPermission : Permission
     {
+
+        protected override IEnumerable<Rule> GetRules()
+        {
+            yield return new StatusRule(new HasAnyRoleRule("BOAD"), SpaceAllocationAcknowledgementStatusEnum.Initial, SpaceAllocationAcknowledgementStatusEnum.Acknowledged);
+            foreach (var rule in base.GetRules())
+                yield return rule;
+        }
+
         public class StatusRule : Rule
         {
             private Rule _otherRule;

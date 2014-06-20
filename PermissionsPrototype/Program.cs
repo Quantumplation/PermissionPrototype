@@ -41,7 +41,8 @@ namespace PermissionsPrototype
 
             // The rules for BD's are: ADM's and BO's can both see BD's that are initial/in progress/completed, and only ADM's can see Archived BD's
             var bdPerm = new BudgetDeterminationPermission.View();
-            // THe rules for SAA's are: ADM's and BOAD's can see all SAA's, but an FO can only see an SA if it is an SAA for a department under where they're assigned the FO permission.
+            // The rules for SAA's are: ADM's and BOAD's can see all SAA's, but an FO can only see an SA if it is an SAA for a department under where they're assigned the FO permission, and only if the SAA is initial or completed.
+            // You can see how this can get rather complicated, but if you peek inside the type, you'll see it's relatively simple to declare
             var saaPerm = new SpaceAllocationAcknowledgementPermission.View();
             for (int x = 5; x <= 8; x++)
             {
@@ -57,14 +58,14 @@ namespace PermissionsPrototype
 
             /*
              OUTPUT:
-                 Users that can see BD 5: Arnold, Beth
-                 Users that can see BD 6: Arnold, Beth
-                 Users that can see BD 7: Arnold, Beth
-                 Users that can see BD 8: Arnold
-                 Users that can see SAA 10: Arnold, Beth, Donald, Gertrude
-                 Users that can see SAA 11: Arnold, Beth, Erwin, Gertrude
-                 Users that can see SAA 12: Arnold, Beth, Gertrude
-                 Users that can see SAA 16: Arnold, Beth, Gertrude, Harold
+                Users that can see BD 5: Arnold, Beth
+                Users that can see BD 6: Arnold, Beth
+                Users that can see BD 7: Arnold, Beth
+                Users that can see BD 8: Arnold
+                Users that can see SAA 10: Donald, Gertrude, Arnold, Beth
+                Users that can see SAA 11: Erwin, Gertrude, Arnold, Beth
+                Users that can see SAA 12: Gertrude, Arnold, Beth
+                Users that can see SAA 16: Gertrude, Harold, Arnold, Beth
              */
 
             Console.ReadKey();
