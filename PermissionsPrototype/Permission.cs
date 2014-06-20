@@ -14,7 +14,7 @@ namespace PermissionsPrototype
     /// <summary>
     /// A permission is a collection of rules determining who is allowed to perform certain actions.
     /// </summary>
-    public abstract class Permission : IPersistable
+    public abstract class Permission
     {
         // We can define extremely broad permissions, like SYS and ADM can do ANYTHING.
         protected virtual IEnumerable<Rule> GetRules()
@@ -22,8 +22,6 @@ namespace PermissionsPrototype
             yield return new HasAnyRoleRule("ADM", "SYS");
         }
     
-        public int Id { get; set; }
-
         public IEnumerable<User> UsersWithPermission<T>(T obj, UnitOfWork uow) where T : class, IPersistable, new()
         {
             return GetRules().SelectMany(x => x.FindUsersSatisfying(obj, uow)).Distinct();
