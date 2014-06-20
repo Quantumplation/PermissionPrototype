@@ -16,7 +16,17 @@ namespace PermissionsPrototype
         protected abstract IEnumerable<Rule> GetRules();
     
         public int Id { get; set; }
-}
+
+        public IEnumerable<User> UsersWithPermission<T>(T obj, UnitOfWork uow) where T : class, IPersistable, new()
+        {
+            return GetRules().SelectMany(x => x.FindUsersSatisfying(obj, uow)).Distinct();
+        }
+
+        public bool HasPermission<T>(T obj, User u, UnitOfWork uow) where T : class, IPersistable, new()
+        {
+            return UsersWithPermission<T>(obj, uow).Contains(u);
+        }
+    }
 
     public abstract class BudgetDeterminationPermission : Permission
     {
@@ -89,7 +99,7 @@ namespace PermissionsPrototype
             protected override IEnumerable<Rule> GetRules()
             {
                 yield return new HasAnyRoleRule("ADM", "BOAD");
-                yield return new StatusRule(new HasAnyRoleAtRule<SpaceAllocationAcknowledgement>(x => x.Department, "FO"), SpaceAllocationAcknowledgementStatusEnum.Initial);
+                yield return new StatusRule(new HasAnyRoleAtRule<SpaceAllocationAcknowledgement>(x => x.Department, "FO"), SpaceAllocationAcknowledgementStatusEnum.Initial, SpaceAllocationAcknowledgementStatusEnum.Acknowledged);
             }
         }
     }

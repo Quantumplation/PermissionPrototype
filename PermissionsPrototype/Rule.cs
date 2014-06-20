@@ -8,9 +8,9 @@ namespace PermissionsPrototype
 {
     public abstract class Rule
     {
-        public abstract IEnumerable<User> FindUsersSatisfying<T>(T obj, UnitOfWork uow);
+        public abstract IEnumerable<User> FindUsersSatisfying<T>(T obj, UnitOfWork uow) where T : class, IPersistable, new();
 
-        public virtual bool UserSatisfies<T>(User u, T obj, UnitOfWork uow)
+        public virtual bool UserSatisfies<T>(User u, T obj, UnitOfWork uow) where T : class, IPersistable, new()
         {
             return FindUsersSatisfying(obj, uow).Any(x => x == u);
         }
@@ -72,16 +72,26 @@ namespace PermissionsPrototype
         }
     }
 
-    public class HasAnyRoleAtRule : Rule
+    public class HasAnyRoleAtRule<U> : Rule where U : class, IPersistable, new()
     {
         private readonly HashSet<string> _roles;
-        public HasAnyRoleAtRule(params string[] roles) : this((IEnumerable<string>) roles)
+        private Func<U, string> _ouSelector; 
+
+        public HasAnyRoleAtRule(Func<U, string> ouSelector, params string[] roles) : this(ouSelector, (IEnumerable<string>) roles)
         {
         }
 
-        public HasAnyRoleAtRule(IEnumerable<string> groles)
+        public HasAnyRoleAtRule(Func<U, string> ouSelector, IEnumerable<string> roles)
         {
-            _roles = new HashSet<string>(groles);
+            _ouSelector = ouSelector;
+            _roles = new HashSet<string>(roles);
+        }
+
+        public override IEnumerable<User> FindUsersSatisfying<T>(T obj, UnitOfWork uow)
+        {
+            return
+                uow.GetWhere<User>(
+                    x => x.Roles.Any(y => _roles.Contains(y.Item1) && _ouSelector(obj as U).StartsWith(y.Item2)));
         }
     }
 }
